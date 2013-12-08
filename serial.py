@@ -22,7 +22,15 @@ class Map:
   def addRobot(self, robot):
     self.robots.append(robot)
 
-  def updatePosition(self,robotId):
+  def updateVelocity(self, robotId):
+    robot = self.robots[robotId]
+
+    for obstacle in obstacles:
+      if obstacle.contains(robot):
+        obstacle.updateVelocity(robot)
+
+
+  def updatePosition(self, robotId):
     if self.robots[robotId].finished == True:
       return
     else:
@@ -44,9 +52,9 @@ class Map:
         self.robots[robotId].position = (self.robots[robotId].position[0],self.height)
         self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
       
-      distfromgoal = np.sqrt((self.robots[robotId].position[0]-self.goalPosition[0])**2+(self.robots[robotId].position[1]-self.goalPosition[1])**2)
+      distFromGoal = np.sqrt((self.robots[robotId].position[0]-self.goalPosition[0])**2+(self.robots[robotId].position[1]-self.goalPosition[1])**2)
       
-      if distfromgoal < goalTolerance:
+      if distFromGoal < goalTolerance:
         self.robots[robotId].finished = True
 
 
@@ -61,17 +69,26 @@ class Robot:
 
 class Obstacle:
   def __init__(self, function):
-    self.function = function
+    self.contains = function
 
 
 class CircleObstacle(Obstacle):
   def __init__(self, center, radius):
-    def circle(position):
+    def circle(robot):
+      position = robot.position
       return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
 
-    self.function = circle
+    def moderateSlow(robot):
+      return slowDown(0.1, robot)
 
-  
+    self.contains = circle
+    self.updateVelocity = moderateSlow
+
+def slowDown(slowfactor, robot, timespan=1):
+  velocity = robot.velocity
+  robot.velocity = (velocity[0](1-slowfactor) * dt / timespan, velocity[1](1-slowfactor) * dt / timespan)
+
+
 if __name__ == '__main__':
 
   startPos = (25,100)
