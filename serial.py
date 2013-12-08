@@ -40,7 +40,7 @@ class Map:
         self.robots[robotId].position = (self.robots[robotId].position[0],0)
         self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
       #max y
-      if self.robots[robotId].position[0]>self.height:
+      if self.robots[robotId].position[1]>self.height:
         self.robots[robotId].position = (self.robots[robotId].position[0],self.height)
         self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
       
@@ -91,6 +91,7 @@ if __name__ == '__main__':
     for robot in globalMap.robots:
       globalMap.updatePosition(robot.id)
       print robot.position
+    time += dt
 
 
 
