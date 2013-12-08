@@ -8,13 +8,12 @@ time = 0
 goalTolerance=2.0
 
 class Map:
-  def __init__(self, dimensions, goalposition, endTime, obstacles=[], robots=[]):
-    self.width = dimensions[0]#eg, max x is width, min x is 0
+  def __init__(self, dimensions, goalPosition, endTime, obstacles=[], robots=[]):
+    self.width = dimensions[0]        #eg, max x is width, min x is 0
     self.height = dimensions[1]
     self.obstacles = obstacles
-    self.robots = robots#list of robots
-    self.goalPosition = goalPosition#tuple of goalx and goaly
-    #self.goaltolerance = goaldimensions[1]
+    self.robots = robots              #list of robots
+    self.goalPosition = goalPosition  #tuple of goalx and goaly
     self.endTime = endTime
 
   def addObstacle(self, obstacle):
@@ -82,11 +81,12 @@ if __name__ == '__main__':
   obstacles.append(CircleObstacle((400, 100), 15))
   
   robots = []
-  robots.append(Robot(startPos, startVel))
+  robots.append(Robot(startPos, startVel, 0))
 
-  globalMap = Map((500, 200), obstacles, robots)
+  globalMap = Map((500, 200), (450,100), 200, obstacles, robots)
   
   while time < globalMap.endTime:
+    print "IN LOOP"
     
     for robot in globalMap.robots:
       globalMap.updatePosition(robot.id)
