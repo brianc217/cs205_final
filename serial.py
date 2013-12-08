@@ -32,31 +32,29 @@ class Map:
 
 
   def updatePosition(self, robotId):
-    if self.robots[robotId].finished == True:
-      return
-    else:
-      self.robots[robotId].position = (self.robots[robotId].position[0]+dt*self.robots[robotId].velocity[0],self.robots[robotId].position[1]+dt*self.robots[robotId].velocity[1])
-      #min x
-      if self.robots[robotId].position[0] < 0:
-        self.robots[robotId].position = (0,self.robots[robotId].position[1])
-        self.robots[robotId].velocity = (0,self.robots[robotId].velocity[1])
-      #max x
-      if self.robots[robotId].position[0] > self.width:
-        self.robots[robotId].position = (self.width,self.robots[robotId].position[1])
-        self.robots[robotId].velocity = (0,self.robots[robotId].velocity[1])
-      #min y
-      if self.robots[robotId].position[1] < 0:
-        self.robots[robotId].position = (self.robots[robotId].position[0],0)
-        self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
-      #max y
-      if self.robots[robotId].position[1] > self.height:
-        self.robots[robotId].position = (self.robots[robotId].position[0],self.height)
-        self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
+
+    self.robots[robotId].position = (self.robots[robotId].position[0]+dt*self.robots[robotId].velocity[0],self.robots[robotId].position[1]+dt*self.robots[robotId].velocity[1])
+    #min x
+    if self.robots[robotId].position[0] < 0:
+      self.robots[robotId].position = (0,self.robots[robotId].position[1])
+      self.robots[robotId].velocity = (0,self.robots[robotId].velocity[1])
+    #max x
+    if self.robots[robotId].position[0] > self.width:
+      self.robots[robotId].position = (self.width,self.robots[robotId].position[1])
+      self.robots[robotId].velocity = (0,self.robots[robotId].velocity[1])
+    #min y
+    if self.robots[robotId].position[1] < 0:
+      self.robots[robotId].position = (self.robots[robotId].position[0],0)
+      self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
+    #max y
+    if self.robots[robotId].position[1] > self.height:
+      self.robots[robotId].position = (self.robots[robotId].position[0],self.height)
+      self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
       
-      distFromGoal = np.sqrt((self.robots[robotId].position[0]-self.goalPosition[0])**2+(self.robots[robotId].position[1]-self.goalPosition[1])**2)
+    distFromGoal = np.sqrt((self.robots[robotId].position[0]-self.goalPosition[0])**2+(self.robots[robotId].position[1]-self.goalPosition[1])**2)
       
-      if distFromGoal < goalTolerance:
-        self.robots[robotId].finished = True
+    if distFromGoal < goalTolerance:
+      self.robots[robotId].finished = True
 
 
 
@@ -86,6 +84,49 @@ class CircleObstacle(Obstacle):
     self.contains = circle
     self.updateVelocity = moderateSlow
 
+class GravityObstacle(Obstacle):
+  #def __init__(self, center, radius):
+  def __init__(self, goalPosition):
+    def always(robot):
+      return True
+
+    #def moderateSlow(robot):
+    #  return slowDown(0.1, robot)
+
+    self.contains = always
+    def gravityVelocity(robot):
+      asymptoticSpeed = 1.0
+      slowfactor = .4
+      timespan = 1
+      inVelocity = robot.velocity
+      inSpeed = np.sqrt(inVelocity[0]**2+inVelocity[1]**2)
+      outSpeed = asymptoticSpeed-(asymptoticSpeed-inSpeed)*(1-slowfactor)**(dt/timespan)
+
+
+      angleRobot = np.arctan2(robot.velocity[1],robot.velocity[0])*180./np.pi
+      angleGoal = np.arctan2(goalPosition[1]-robot.position[1],goalPosition[0]-robot.position[0])*180./np.pi
+      
+      # angleRate = 30
+      # angleDiff = (angleGoal - angleRobot-180)% 360 - 180
+      # print "angleDiff",angleDiff
+      # angleMotion = angleRate * (1-(1-slowfactor)**(dt/timespan))#this line should be changed if used, no slowfactor or anything
+      # if np.abs(angleMotion)>np.abs(angleDiff):
+      #   angleNew = angleGoal
+      # else:
+      #   angleNew = angleRobot+
+
+
+      if angleGoal-angleRobot<180 and angleGoal-angleRobot>-180:
+        angleNew = angleRobot+(angleGoal-angleRobot)*(1-(1-slowfactor)**(dt/timespan))
+      else:
+        angleDiff = (angleGoal-angleRobot+180) % 360 - 180
+        angleNew = angleRobot+angleDiff*(1-(1-slowfactor)**(dt/timespan))
+      robot.velocity = (outSpeed*np.cos(angleNew*np.pi/180),outSpeed*np.sin(angleNew*np.pi/180))
+    
+    self.updateVelocity = gravityVelocity
+
+
+
 def slowDown(slowfactor, robot, timespan=1):
   velocity = robot.velocity
   robot.velocity = (velocity[0]*(1-slowfactor) ** (dt / timespan), velocity[1]*(1-slowfactor) ** (dt / timespan))
@@ -93,24 +134,31 @@ def slowDown(slowfactor, robot, timespan=1):
 
 if __name__ == '__main__':
 
-  startPos = (25,100)
+  startPos = (25,40)
   startVel = (1,0)
+  goalPosition = (450,100)
   
   obstacles = []
   obstacles.append(CircleObstacle((400, 100), 15))
+  obstacles.append(GravityObstacle(goalPosition))
   
   robots = []
   robots.append(Robot(startPos, startVel, 0))
 
-  globalMap = Map((500, 200), (450,100), 555, obstacles, robots)
+  globalMap = Map((500, 200), goalPosition, 2000, obstacles, robots)
+
   
   while time < globalMap.endTime:
     
     for robot in globalMap.robots:
-      globalMap.updatePosition(robot.id)
-      globalMap.updateVelocity(robot.id)
-      robot.posHistory.append(robot.position)
-      robot.velHistory.append(robot.velocity)
+
+      if robot.finished == False:
+        globalMap.updatePosition(robot.id)
+        globalMap.updateVelocity(robot.id)
+        robot.posHistory.append(robot.position)
+        robot.velHistory.append(robot.velocity)
+      else:
+        print "robot",robot.id,"is in goal"
 
     time += dt
 
@@ -123,6 +171,7 @@ if __name__ == '__main__':
       y.append(pos[1])
 
   plt.plot(x,y)
+  plt.show()
     
   '''
   with open('out.csv', 'wb') as csvfile:
