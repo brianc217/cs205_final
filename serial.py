@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import csv
+import math
 
 # Global variables, can be used by any process
 dt = 0.1
@@ -87,13 +88,10 @@ class CircleObstacle(Obstacle):
 class GravityObstacle(Obstacle):
   #def __init__(self, center, radius):
   def __init__(self, goalPosition):
+
     def always(robot):
       return True
 
-    #def moderateSlow(robot):
-    #  return slowDown(0.1, robot)
-
-    self.contains = always
     def gravityVelocity(robot):
       asymptoticSpeed = 1.0
       slowfactor = .4
@@ -124,7 +122,39 @@ class GravityObstacle(Obstacle):
       robot.velocity = (outSpeed*np.cos(angleNew*np.pi/180),outSpeed*np.sin(angleNew*np.pi/180))
     
     self.updateVelocity = gravityVelocity
+    self.contains = always
 
+class RigidObstacle():
+  def __init__(self, center, radius):
+
+    def canceledVelocity(robot):
+      pos = robot.position
+      vel = robot.velocity
+
+      if pos[1] > center[1]:
+        newY = center[1] + math.sqrt(radius**2 - (pos[0]-center[0])**2)
+      else:
+        newY = center[1] - math.sqrt(radius**2 - (pos[0]-center[0])**2)
+
+      newX = pos[0]
+
+      robot.position = (newX,newY)
+      mag0 = math.sqrt(vel[0]**2 + vel[1]**2)
+      Vx0 = vel[0] / mag0
+      Vy0 = vel[1] / mag0
+
+      cancelV = (newX-center[0], newY-center[1])
+      mag1 = math.sqrt(cancelV[0]**2 + cancelV[1]**2)
+      Vx1 = cancelV[0] / mag1
+      Vy1 = cancelV[1] / mag1
+
+      newVx = (Vx0 - Vx1) * mag0
+      newVy = (Vy0 - Vy1) * mag0
+
+      robot.velocity = (newVx,newVy)
+
+    self.contains = CircleObstacle(center, radius).contains
+    self.updateVelocity = canceledVelocity
 
 
 def slowDown(slowfactor, robot, timespan=1):
@@ -134,13 +164,14 @@ def slowDown(slowfactor, robot, timespan=1):
 
 if __name__ == '__main__':
 
-  startPos = (25,40)
+  startPos = (25,100)
   startVel = (1,0)
   goalPosition = (450,100)
   
   obstacles = []
   obstacles.append(CircleObstacle((400, 100), 15))
   obstacles.append(GravityObstacle(goalPosition))
+  obstacles.append(RigidObstacle((225, 100), 25))
   
   robots = []
   robots.append(Robot(startPos, startVel, 0))
