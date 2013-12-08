@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Use the current working directory and environment variables
+#$ -cwd -V
+# Merge output and error messages into single file
+#$ -j y
+# Name of the output file
+#$ -o cs205hw.o$JOB_ID
+# Shell environment
+#$ -S /bin/bash
+# The number of processes to launch
+# (Change the number)
+#$ -pe orte 2
+
+# Launch the job with the above number of processes
+# (Only change the python file)
+mpirun -n $NSLOTS python my_python.py
