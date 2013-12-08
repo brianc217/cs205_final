@@ -44,18 +44,20 @@ class Map:
       if self.robots[robotId].position[0]>self.height:
         self.robots[robotId].position = (self.robots[robotId].position[0],self.height)
         self.robots[robotId].velocity = (self.robots[robotId].velocity[0],0)
+      
       distfromgoal = np.sqrt((self.robots[robotId].position[0]-self.goalPosition[0])**2+(self.robots[robotId].position[1]-self.goalPosition[1])**2)
-      if distfromgoal<goalTolerance:
+      
+      if distfromgoal < goalTolerance:
         self.robots[robotId].finished = True
 
 
 
 class Robot:
-  def __init__(self, position, velocity,robotId):
+  def __init__(self, position, velocity, robotId):
     self.position = position
     self.velocity = velocity
     self.finished = False
-    self.robotId = robotId
+    self.id = robotId
 
 
 class Obstacle:
@@ -71,7 +73,6 @@ class CircleObstacle(Obstacle):
     self.function = circle
 
   
-
 if __name__ == '__main__':
 
   startPos = (25,100)
@@ -87,5 +88,9 @@ if __name__ == '__main__':
   
   while time < globalMap.endTime:
     
+    for robot in globalMap.robots:
+      globalMap.updatePosition(robot.id)
+      print robot.position
+
 
 
