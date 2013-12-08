@@ -31,7 +31,29 @@ class Obstacle:
     self.function = function
 
 
+class CircleObstacle(Obstacle):
+  def __init__(self, center, radius):
+    def circle(position):
+      return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
+
+    self.function = circle
+
+  
 
 if __name__ == '__main__':
+
+  startPos = (25,100)
+  startVel = (1,0)
+  
+  obstacles = []
+  obstacles.append(CircleObstacle((400, 100), 15))
+  
+  robots = []
+  robots.append(Robot(startPos, startVel))
+
+  globalMap = Map((500, 200), obstacles, robots)
+  
+  while time < globalMap.endTime:
+    
 
 
