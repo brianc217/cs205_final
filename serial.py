@@ -94,7 +94,7 @@ class GravityObstacle(Obstacle):
 
     def gravityVelocity(robot):
       asymptoticSpeed = 1.0
-      slowfactor = .4
+      slowfactor = .05
       timespan = 1
       inVelocity = robot.velocity
       inSpeed = np.sqrt(inVelocity[0]**2+inVelocity[1]**2)
@@ -166,17 +166,21 @@ if __name__ == '__main__':
 
   startPos = (25,100)
   startVel = (1,0)
+
   goalPosition = (450,100)
+  mapDim = (500,200)
   
   obstacles = []
-  obstacles.append(CircleObstacle((400, 100), 15))
+  circlePosition = (400,100)
+  circleRadius = 15
+  obstacles.append(CircleObstacle(circlePosition, circleRadius))
   obstacles.append(GravityObstacle(goalPosition))
   obstacles.append(RigidObstacle((225, 100), 25))
   
   robots = []
   robots.append(Robot(startPos, startVel, 0))
 
-  globalMap = Map((500, 200), goalPosition, 2000, obstacles, robots)
+  globalMap = Map(mapDim, goalPosition, 2000, obstacles, robots)
 
   
   while time < globalMap.endTime:
@@ -201,7 +205,23 @@ if __name__ == '__main__':
       x.append(pos[0])
       y.append(pos[1])
 
-  plt.plot(x,y)
+  plt.figure()
+  #plt.plot(x,y,'b-',linewidth=4)
+  ax1 = plt.gca()
+  plt.axis('scaled')
+  ax1.set_xlim([0,mapDim[0]])
+  ax1.set_ylim([0,mapDim[1]])
+  dotGap = int(np.round(np.float(len(x))/100.))
+  xdots = x[0::dotGap]
+  ydots = y[0::dotGap]
+  plt.plot(xdots,ydots,'k.',markersize=3)
+  goalCircle = plt.Circle(goalPosition,goalTolerance,color='g')
+  ax1.add_artist(goalCircle)
+  startCircle = plt.Circle(startPos,goalTolerance,color='b')
+  ax1.add_artist(startCircle)
+  obstacleCircle1 = plt.Circle(circlePosition,circleRadius,color='r')
+  ax1.add_artist(obstacleCircle1)
+
   plt.show()
     
   '''
