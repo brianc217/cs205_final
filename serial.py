@@ -57,11 +57,11 @@ class Map:
       
     if distFromGoal < goalTolerance:
       self.robots[robotId].finished = True
-
+      self.robots[robotId].endTime = time
 
 
 class Robot:
-  def __init__(self, position, velocity, robotId, slowFactor=0.05):
+  def __init__(self, position, velocity, robotId, start, slowFactor=0.05):
     self.position = position
     self.velocity = velocity
     self.finished = False
@@ -76,6 +76,8 @@ class Robot:
     self.histvy = 0
     self.histvmag = 0
     self.histvang = 0
+    self.startTime = start
+    self.endTime = 0
 
 class Obstacle:
   def __init__(self, function):
@@ -193,7 +195,7 @@ def allRobotsInGoal(gMap):
 if __name__ == '__main__':
 
   startPos = (25,40)
-  vMagnitude = 1
+  vMagnitude = 3
 
   goalPosition = (450,100)
   mapDim = (500,200)
@@ -221,7 +223,7 @@ if __name__ == '__main__':
       Vy = math.cos(math.radians(angle)) * vMagnitude
 
       rid = len(globalMap.robots)  
-      globalMap.addRobot(Robot(startPos, (Vx, Vy), rid))
+      globalMap.addRobot(Robot(startPos, (Vx, Vy), rid, time))
 
     for robot in globalMap.robots:
 
@@ -244,6 +246,8 @@ if __name__ == '__main__':
   # vmag = []
   # vang = []
 
+  bestTime = float('Inf')
+
   for robot in globalMap.robots:
     x = []
     y = []
@@ -265,6 +269,10 @@ if __name__ == '__main__':
     robot.histvy = vy
     robot.histvmag = vmag
     robot.histvang = vang
+
+    if robot.endTime - robot.startTime < bestTime:
+      bestRobot = robot.id
+      bestTime = robot.endTime - robot.startTime
 
   plt.figure()
   for robot in globalMap.robots:
