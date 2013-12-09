@@ -161,21 +161,31 @@ def slowDown(slowfactor, robot, timespan=1):
   velocity = robot.velocity
   robot.velocity = (velocity[0]*(1-slowfactor) ** (dt / timespan), velocity[1]*(1-slowfactor) ** (dt / timespan))
 
+def allRobotsInGoal(gMap):
+
+  for robot in gMap.robots:
+    if not robot.finished:
+      return False
+
+  return True
 
 if __name__ == '__main__':
 
-  startPos = (25,100)
+  startPos = (25,101)
   startVel = (1,0)
 
   goalPosition = (450,100)
   mapDim = (500,200)
   
-  obstacles = []
   circlePosition = (400,100)
   circleRadius = 15
+  rigidPos = (225,100)
+  rigidRad = 50
+
+  obstacles = []
   obstacles.append(CircleObstacle(circlePosition, circleRadius))
   obstacles.append(GravityObstacle(goalPosition))
-  obstacles.append(RigidObstacle((225, 100), 25))
+  obstacles.append(RigidObstacle(rigidPos, rigidRad))
   
   robots = []
   robots.append(Robot(startPos, startVel, 0))
@@ -183,7 +193,7 @@ if __name__ == '__main__':
   globalMap = Map(mapDim, goalPosition, 2000, obstacles, robots)
 
   
-  while time < globalMap.endTime:
+  while time < globalMap.endTime and not allRobotsInGoal(globalMap):
     
     for robot in globalMap.robots:
 
@@ -192,6 +202,7 @@ if __name__ == '__main__':
         globalMap.updateVelocity(robot.id)
         robot.posHistory.append(robot.position)
         robot.velHistory.append(robot.velocity)
+        print robot.position, robot.velocity
       else:
         print "robot",robot.id,"is in goal"
 
@@ -221,6 +232,8 @@ if __name__ == '__main__':
   ax1.add_artist(startCircle)
   obstacleCircle1 = plt.Circle(circlePosition,circleRadius,color='r')
   ax1.add_artist(obstacleCircle1)
+  rigidCircle = plt.Circle(rigidPos,rigidRad,color='k')
+  ax1.add_artist(rigidCircle)
 
   plt.show()
     
