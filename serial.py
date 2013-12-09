@@ -8,7 +8,7 @@ import random
 # Global variables, can be used by any process
 dt = 0.1
 time = 0
-goalTolerance=2.0
+goalTolerance=6.0
 
 class Map:
   def __init__(self, dimensions, goalPosition, endTime, obstacles=[], robots=[]):
@@ -31,6 +31,16 @@ class Map:
     for obstacle in obstacles:
       if obstacle.contains(robot):
         obstacle.updateVelocity(robot)
+
+  def robotToRobot(self, robotId, neighbors):
+    # neighbors denote robots that could be in the vicinity of robotId
+    for robot in neighbors:
+      if robot.id is robotId:
+        continue
+
+      neighbor = RigidObstacle(robot.position, 3, bounce=False)
+      if neighbor.contains(self.robots[robotId]) and not robot.finished:
+        neighbor.updateVelocity(self.robots[robotId])
 
 
   def updatePosition(self, robotId):
@@ -124,7 +134,6 @@ class GravityObstacle(Obstacle):
       # else:
       #   angleNew = angleRobot+
 
-
       if angleGoal-angleRobot<180 and angleGoal-angleRobot>-180:
         angleNew = angleRobot+(angleGoal-angleRobot)*(1-(1-slowfactor)**(dt/timespan))
       else:
@@ -136,7 +145,7 @@ class GravityObstacle(Obstacle):
     self.contains = always
 
 class RigidObstacle():
-  def __init__(self, center, radius):
+  def __init__(self, center, radius, bounce=True):
 
     def canceledVelocity(robot):
       pos = robot.position
@@ -160,8 +169,12 @@ class RigidObstacle():
       Vx1 = cancelV[0] / mag1
       Vy1 = cancelV[1] / mag1
 
-      newVx = (Vx0 + Vx1) * mag0
-      newVy = (Vy0 + Vy1) * mag0
+      if bounce:
+        newVx = (Vx0 + Vx1) * mag0
+        newVy = (Vy0 + Vy1) * mag0
+      else:
+        newVx = (Vx0 + Vx1/mag0) * mag0
+        newVy = (Vy0 + Vy1/mag0) * mag0
 
       print "rigid obstacle old/new v",robot.velocity,(newVx,newVy)
       robot.velocity = (newVx,newVy)
@@ -199,8 +212,8 @@ if __name__ == '__main__':
 
   goalPosition = (450,100)
   mapDim = (500,200)
-  endTime = 4000
-  maxNumRobots = 10
+  endTime = 400
+  maxNumRobots = 100
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -230,6 +243,7 @@ if __name__ == '__main__':
       if robot.finished == False:
         globalMap.updatePosition(robot.id)
         globalMap.updateVelocity(robot.id)
+        globalMap.robotToRobot(robot.id, globalMap.robots)
         robot.posHistory.append(robot.position)
         robot.velHistory.append(robot.velocity)
         print robot.position, robot.velocity
@@ -239,22 +253,11 @@ if __name__ == '__main__':
     time += dt
     counter += 1
 
-  # x = []
-  # y = []
-  # vx = []
-  # vy = []
-  # vmag = []
-  # vang = []
-
   bestTime = float('Inf')
 
   for robot in globalMap.robots:
-    x = []
-    y = []
-    vx = []
-    vy = []
-    vmag = []
-    vang = []
+    x, y, vx, vy, vmag, vang = [], [], [], [], [], []
+
     for pos in robot.posHistory:
       x.append(pos[0])
       y.append(pos[1])
@@ -263,6 +266,7 @@ if __name__ == '__main__':
       vy.append(vel[1])
       vmag.append(np.sqrt(vel[0]**2+vel[1]**2))
       vang.append(np.arctan2(vel[1],vel[0])*180./np.pi)
+
     robot.histx = x
     robot.histy = y
     robot.histvx = vx
@@ -294,14 +298,10 @@ if __name__ == '__main__':
   ax1.add_artist(startCircle)
   obstacleCircle1 = plt.Circle(circlePosition,circleRadius,color='r')
   ax1.add_artist(obstacleCircle1)
-  rigidCircle = plt.Circle(rigidPos,rigidRad,color='k')
+  rigidCircle = plt.Circle(rigidPos,rigidRad,color='y')
   ax1.add_artist(rigidCircle)
   ax1.set_xlabel('x')
   ax1.set_ylabel('y')
-
-
-
-
 
   # plt.figure()
   # ax2 = plt.gca()
@@ -314,13 +314,13 @@ if __name__ == '__main__':
   plt.subplot(211)  
   for robot in globalMap.robots:
     plt.plot(robot.histvmag)
-  plt.gca().set_ylabel('velocity')
+  plt.gca().set_ylabel('Speed')
   plt.subplot(212)
   for robot in globalMap.robots:
     plt.plot(robot.histvang)
   plt.gca().set_ylim([-180,180])
-  plt.gca().set_xlabel('time step')
-  plt.gca().set_ylabel('angle from (1,0) (degrees)')
+  plt.gca().set_xlabel('Time step')
+  plt.gca().set_ylabel('Angle from (1,0) (Degrees)')
   plt.show()
     
   '''
