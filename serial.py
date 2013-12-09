@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import time
 import csv
 import math
+import random
 
 # Global variables, can be used by any process
 dt = 0.1
@@ -172,6 +173,9 @@ def slowDown(slowfactor, robot, timespan=1):
   robot.velocity = (velocity[0]*(1-slowfactor) ** (dt / timespan), velocity[1]*(1-slowfactor) ** (dt / timespan))
 
 def allRobotsInGoal(gMap):
+  # Return false if there are no robots
+  if len(gMap.robots) is 0:
+    return False
 
   for robot in gMap.robots:
     if not robot.finished:
@@ -179,14 +183,16 @@ def allRobotsInGoal(gMap):
 
   return True
 
+
 if __name__ == '__main__':
 
   startPos = (25,40)
-  startVel = (1,4)
+  vMagnitude = 1
 
   goalPosition = (450,100)
   mapDim = (500,200)
   endTime = 4000
+  maxNumRobots = 10
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -197,15 +203,22 @@ if __name__ == '__main__':
   obstacles.append(CircleObstacle(circlePosition, circleRadius))
   obstacles.append(GravityObstacle(goalPosition))
   obstacles.append(RigidObstacle(rigidPos, rigidRad))
-  
-  robots = []
-  robots.append(Robot(startPos, startVel, 0))
 
-  globalMap = Map(mapDim, goalPosition, endTime, obstacles, robots)
+  globalMap = Map(mapDim, goalPosition, endTime, obstacles)
+  counter = 0
 
-  
   while time < globalMap.endTime and not allRobotsInGoal(globalMap):
-    
+
+    if counter % 5 is 0 and len(globalMap.robots) < maxNumRobots:
+      Vx = random.random()
+      if random.random() < 0.5:
+        Vy = math.sqrt(vMagnitude**2 - Vx**2)
+      else:
+        Vy = -math.sqrt(vMagnitude**2 - Vx**2)
+
+      rid = len(globalMap.robots)  
+      globalMap.addRobot(Robot(startPos, (Vx, Vy), rid))
+
     for robot in globalMap.robots:
 
       if robot.finished == False:
