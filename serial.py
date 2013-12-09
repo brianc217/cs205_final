@@ -210,11 +210,9 @@ if __name__ == '__main__':
   while time < globalMap.endTime and not allRobotsInGoal(globalMap):
 
     if counter % 5 is 0 and len(globalMap.robots) < maxNumRobots:
-      Vx = random.random()
-      if random.random() < 0.5:
-        Vy = math.sqrt(vMagnitude**2 - Vx**2)
-      else:
-        Vy = -math.sqrt(vMagnitude**2 - Vx**2)
+      angle = random.random() * 180
+      Vx = math.sin(math.radians(angle)) * vMagnitude
+      Vy = math.cos(math.radians(angle)) * vMagnitude
 
       rid = len(globalMap.robots)  
       globalMap.addRobot(Robot(startPos, (Vx, Vy), rid))
@@ -231,6 +229,7 @@ if __name__ == '__main__':
         print "robot",robot.id,"is in goal"
 
     time += dt
+    counter += 1
 
   x = []
   y = []
