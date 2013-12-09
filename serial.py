@@ -60,13 +60,15 @@ class Map:
 
 
 class Robot:
-  def __init__(self, position, velocity, robotId):
+  def __init__(self, position, velocity, robotId, slowFactor=0.05):
     self.position = position
     self.velocity = velocity
     self.finished = False
     self.id = robotId
     self.posHistory = [position]
     self.velHistory = [velocity]
+    self.V0 = math.sqrt(velocity[0]**2 + velocity[1]**2)
+    self.slowFactor = slowFactor
 
 class Obstacle:
   def __init__(self, function):
@@ -93,8 +95,8 @@ class GravityObstacle(Obstacle):
       return True
 
     def gravityVelocity(robot):
-      asymptoticSpeed = 1.0
-      slowfactor = .05
+      asymptoticSpeed = robot.V0
+      slowfactor = robot.slowFactor
       timespan = 1
       inVelocity = robot.velocity
       inSpeed = np.sqrt(inVelocity[0]**2+inVelocity[1]**2)
@@ -130,11 +132,12 @@ class RigidObstacle():
     def canceledVelocity(robot):
       pos = robot.position
       vel = robot.velocity
+      e = 0.01
 
       if pos[1] > center[1]:
-        newY = center[1] + math.sqrt(radius**2 - (pos[0]-center[0])**2)
+        newY = e + center[1] + math.sqrt(radius**2 - (pos[0]-center[0])**2)
       else:
-        newY = center[1] - math.sqrt(radius**2 - (pos[0]-center[0])**2)
+        newY = e + center[1] - math.sqrt(radius**2 - (pos[0]-center[0])**2)
 
       newX = pos[0]
 
@@ -148,8 +151,8 @@ class RigidObstacle():
       Vx1 = cancelV[0] / mag1
       Vy1 = cancelV[1] / mag1
 
-      newVx = (Vx0 - Vx1) * mag0
-      newVy = (Vy0 - Vy1) * mag0
+      newVx = (Vx0 + Vx1) * mag0
+      newVy = (Vy0 + Vy1) * mag0
 
       robot.velocity = (newVx,newVy)
 
@@ -171,14 +174,15 @@ def allRobotsInGoal(gMap):
 
 if __name__ == '__main__':
 
-  startPos = (25,101)
-  startVel = (1,0)
+  startPos = (25,40)
+  startVel = (1,4)
 
   goalPosition = (450,100)
   mapDim = (500,200)
+  endTime = 4000
   
   circlePosition = (400,100)
-  circleRadius = 15
+  circleRadius = 30
   rigidPos = (225,100)
   rigidRad = 50
 
@@ -190,7 +194,7 @@ if __name__ == '__main__':
   robots = []
   robots.append(Robot(startPos, startVel, 0))
 
-  globalMap = Map(mapDim, goalPosition, 2000, obstacles, robots)
+  globalMap = Map(mapDim, goalPosition, endTime, obstacles, robots)
 
   
   while time < globalMap.endTime and not allRobotsInGoal(globalMap):
@@ -217,7 +221,7 @@ if __name__ == '__main__':
       y.append(pos[1])
 
   plt.figure()
-  #plt.plot(x,y,'b-',linewidth=4)
+  plt.plot(x,y,'b-',linewidth=4)
   ax1 = plt.gca()
   plt.axis('scaled')
   ax1.set_xlim([0,mapDim[0]])
