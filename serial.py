@@ -70,6 +70,12 @@ class Robot:
     self.velHistory = [velocity]
     self.V0 = math.sqrt(velocity[0]**2 + velocity[1]**2)
     self.slowFactor = slowFactor
+    self.histx = 0
+    self.histy = 0
+    self.histvx = 0
+    self.histvy = 0
+    self.histvmag = 0
+    self.histvang = 0
 
 class Obstacle:
   def __init__(self, function):
@@ -231,14 +237,20 @@ if __name__ == '__main__':
     time += dt
     counter += 1
 
-  x = []
-  y = []
-  vx = []
-  vy = []
-  vmag = []
-  vang = []
+  # x = []
+  # y = []
+  # vx = []
+  # vy = []
+  # vmag = []
+  # vang = []
 
   for robot in globalMap.robots:
+    x = []
+    y = []
+    vx = []
+    vy = []
+    vmag = []
+    vang = []
     for pos in robot.posHistory:
       x.append(pos[0])
       y.append(pos[1])
@@ -247,17 +259,27 @@ if __name__ == '__main__':
       vy.append(vel[1])
       vmag.append(np.sqrt(vel[0]**2+vel[1]**2))
       vang.append(np.arctan2(vel[1],vel[0])*180./np.pi)
+    robot.histx = x
+    robot.histy = y
+    robot.histvx = vx
+    robot.histvy = vy
+    robot.histvmag = vmag
+    robot.histvang = vang
 
   plt.figure()
-  plt.plot(x,y,'b-',linewidth=4)
+  for robot in globalMap.robots:
+    plt.plot(robot.histx,robot.histy,'b-',linewidth=4,alpha=.2)
   ax1 = plt.gca()
   plt.axis('scaled')
   ax1.set_xlim([0,mapDim[0]])
   ax1.set_ylim([0,mapDim[1]])
-  dotGap = int(np.round(np.float(len(x))/100.))
-  xdots = x[0::dotGap]
-  ydots = y[0::dotGap]
-  plt.plot(xdots,ydots,'k.',markersize=3)
+  for robot in globalMap.robots:
+    x = robot.histx
+    y = robot.histy
+    dotGap = int(np.round(np.float(len(x))/100.))
+    xdots = x[0::dotGap]
+    ydots = y[0::dotGap]
+    plt.plot(xdots,ydots,'k.',markersize=3)
   goalCircle = plt.Circle(goalPosition,goalTolerance,color='g')
   ax1.add_artist(goalCircle)
   startCircle = plt.Circle(startPos,goalTolerance,color='b')
@@ -282,10 +304,12 @@ if __name__ == '__main__':
 
   plt.figure()
   plt.subplot(211)  
-  plt.plot(vmag)
+  for robot in globalMap.robots:
+    plt.plot(robot.histvmag)
   plt.gca().set_ylabel('velocity')
   plt.subplot(212)
-  plt.plot(vang)
+  for robot in globalMap.robots:
+    plt.plot(robot.histvang)
   plt.gca().set_ylim([-180,180])
   plt.gca().set_xlabel('time step')
   plt.gca().set_ylabel('angle from (1,0) (degrees)')
