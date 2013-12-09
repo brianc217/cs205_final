@@ -148,10 +148,17 @@ class RigidObstacle():
       Vx1 = cancelV[0] / mag1
       Vy1 = cancelV[1] / mag1
 
-      newVx = (Vx0 - Vx1) * mag0
-      newVy = (Vy0 - Vy1) * mag0
+      newVx = (Vx0 + Vx1) * mag0
+      newVy = (Vy0 + Vy1) * mag0
 
+      print "rigid obstacle old/new v",robot.velocity,(newVx,newVy)
       robot.velocity = (newVx,newVy)
+
+
+    # def circle(robot):
+    #   position = robot.position
+    #   return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
+    # self.contains = circle
 
     self.contains = CircleObstacle(center, radius).contains
     self.updateVelocity = canceledVelocity
@@ -210,11 +217,20 @@ if __name__ == '__main__':
 
   x = []
   y = []
+  vx = []
+  vy = []
+  vmag = []
+  vang = []
 
   for robot in globalMap.robots:
     for pos in robot.posHistory:
       x.append(pos[0])
       y.append(pos[1])
+    for vel in robot.velHistory:
+      vx.append(vel[0])
+      vy.append(vel[1])
+      vmag.append(np.sqrt(vel[0]**2+vel[1]**2))
+      vang.append(np.arctan2(vel[1],vel[0])*180./np.pi)
 
   plt.figure()
   #plt.plot(x,y,'b-',linewidth=4)
@@ -234,7 +250,29 @@ if __name__ == '__main__':
   ax1.add_artist(obstacleCircle1)
   rigidCircle = plt.Circle(rigidPos,rigidRad,color='k')
   ax1.add_artist(rigidCircle)
+  ax1.set_xlabel('x')
+  ax1.set_ylabel('y')
 
+
+
+
+
+  # plt.figure()
+  # ax2 = plt.gca()
+  # plt.plot(x,'r')
+  # plt.plot(y,'g')
+  # plt.plot(vx,'b')
+  # plt.plot(vy,'k')
+
+  plt.figure()
+  plt.subplot(211)  
+  plt.plot(vmag)
+  plt.gca().set_ylabel('velocity')
+  plt.subplot(212)
+  plt.plot(vang)
+  plt.gca().set_ylim([-180,180])
+  plt.gca().set_xlabel('time step')
+  plt.gca().set_ylabel('angle from (1,0) (degrees)')
   plt.show()
     
   '''
