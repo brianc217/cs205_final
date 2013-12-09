@@ -57,11 +57,11 @@ class Map:
       
     if distFromGoal < goalTolerance:
       self.robots[robotId].finished = True
-
+      self.robots[robotId].endTime = time
 
 
 class Robot:
-  def __init__(self, position, velocity, robotId, slowFactor=0.05):
+  def __init__(self, position, velocity, robotId, start, slowFactor=0.05):
     self.position = position
     self.velocity = velocity
     self.finished = False
@@ -76,7 +76,8 @@ class Robot:
     self.histvy = 0
     self.histvmag = 0
     self.histvang = 0
-    self.timefinish = 0
+    self.startTime = start
+    self.endTime = float('Inf')
 
 class Obstacle:
   def __init__(self, function):
@@ -90,7 +91,7 @@ class CircleObstacle(Obstacle):
       return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
 
     def moderateSlow(robot):
-      return slowDown(0.01, robot)
+      return slowDown(0.2, robot)
 
     self.contains = circle
     self.updateVelocity = moderateSlow
@@ -195,12 +196,12 @@ if __name__ == '__main__':
 
   startTimeProgram = timepackage.time()
   startPos = (25,40)
-  vMagnitude = 1
+  vMagnitude = 3
 
   goalPosition = (450,100)
   mapDim = (500,200)
-  endTime = 4000
-  maxNumRobots = 200
+  endTime = 500
+  maxNumRobots = 20
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -223,7 +224,7 @@ if __name__ == '__main__':
       Vy = math.cos(math.radians(angle)) * vMagnitude
 
       rid = len(globalMap.robots)  
-      globalMap.addRobot(Robot(startPos, (Vx, Vy), rid))
+      globalMap.addRobot(Robot(startPos, (Vx, Vy), rid, time))
 
     for robot in globalMap.robots:
 
@@ -245,6 +246,8 @@ if __name__ == '__main__':
   # vy = []
   # vmag = []
   # vang = []
+
+  bestTime = float('Inf')
 
   for robot in globalMap.robots:
     x = []
@@ -269,14 +272,12 @@ if __name__ == '__main__':
     robot.histvang = vang
     robot.timefinish = random.random()
 
-  allTimeFinish = []
-  for robot in globalMap.robots:
-    allTimeFinish.append(robot.timefinish)
-  bestRobot = np.argmin(allTimeFinish)
-  #print "bestRobot",bestRobot
-  #print "allTimeFinish",allTimeFinish
+    if robot.endTime - robot.startTime < bestTime:
+      bestRobot = robot.id
+      bestTime = robot.endTime - robot.startTime
   endTimeProgram = timepackage.time()
   print "Serial Time",endTimeProgram-startTimeProgram
+
   plt.figure()
   for robot in globalMap.robots:
     if robot.id == bestRobot:
