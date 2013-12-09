@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import time as timepackage
 import csv
 import math
 import random
@@ -76,6 +76,7 @@ class Robot:
     self.histvy = 0
     self.histvmag = 0
     self.histvang = 0
+    self.timefinish = 0
 
 class Obstacle:
   def __init__(self, function):
@@ -192,13 +193,14 @@ def allRobotsInGoal(gMap):
 
 if __name__ == '__main__':
 
+  startTimeProgram = timepackage.time()
   startPos = (25,40)
   vMagnitude = 1
 
   goalPosition = (450,100)
   mapDim = (500,200)
   endTime = 4000
-  maxNumRobots = 10
+  maxNumRobots = 200
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -265,10 +267,22 @@ if __name__ == '__main__':
     robot.histvy = vy
     robot.histvmag = vmag
     robot.histvang = vang
+    robot.timefinish = random.random()
 
+  allTimeFinish = []
+  for robot in globalMap.robots:
+    allTimeFinish.append(robot.timefinish)
+  bestRobot = np.argmin(allTimeFinish)
+  #print "bestRobot",bestRobot
+  #print "allTimeFinish",allTimeFinish
+  endTimeProgram = timepackage.time()
+  print "Serial Time",endTimeProgram-startTimeProgram
   plt.figure()
   for robot in globalMap.robots:
-    plt.plot(robot.histx,robot.histy,'b-',linewidth=4,alpha=.2)
+    if robot.id == bestRobot:
+      plt.plot(robot.histx,robot.histy,'g-',linewidth=4,alpha=.9)
+    plt.plot(robot.histx,robot.histy,'b-',linewidth=2,alpha=1./maxNumRobots*4)
+  plt.plot(globalMap.robots[bestRobot].histx,globalMap.robots[bestRobot].histy,'g-',linewidth=4,alpha=.9)
   ax1 = plt.gca()
   plt.axis('scaled')
   ax1.set_xlim([0,mapDim[0]])
@@ -279,7 +293,8 @@ if __name__ == '__main__':
     dotGap = int(np.round(np.float(len(x))/100.))
     xdots = x[0::dotGap]
     ydots = y[0::dotGap]
-    plt.plot(xdots,ydots,'k.',markersize=3)
+    if robot.id == bestRobot:
+      plt.plot(xdots,ydots,'k.',markersize=3)
   goalCircle = plt.Circle(goalPosition,goalTolerance,color='g')
   ax1.add_artist(goalCircle)
   startCircle = plt.Circle(startPos,goalTolerance,color='b')
@@ -306,7 +321,7 @@ if __name__ == '__main__':
   plt.subplot(211)  
   for robot in globalMap.robots:
     plt.plot(robot.histvmag)
-  plt.gca().set_ylabel('velocity')
+  plt.gca().set_ylabel('speed')
   plt.subplot(212)
   for robot in globalMap.robots:
     plt.plot(robot.histvang)
