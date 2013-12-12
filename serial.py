@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time as timepackage
-import csv
 import math
 import random
 
@@ -10,6 +9,7 @@ dt = 0.1
 time = 0
 goalTolerance=6.0
 
+# Map defines the physical space, including dimensions, all robots, obstacles, goal position, etc.
 class Map:
   def __init__(self, dimensions, goalPosition, endTime, obstacles=[], robots=[]):
     self.width = dimensions[0]        #eg, max x is width, min x is 0
@@ -32,12 +32,14 @@ class Map:
       if obstacle.contains(robot):
         obstacle.updateVelocity(robot)
 
+  # Handle position and velocity changes due to robot on robot interactions
   def robotToRobot(self, robotId, neighbors):
-    # neighbors denote robots that could be in the vicinity of robotId
+    # "Neighbors" denotes robots that could be in the vicinity of robotId
     for robot in neighbors:
       if robot.id is robotId:
         continue
 
+      # Treat robots like rigid obstacles, but without a bounce factor
       neighbor = RigidObstacle(robot.position, 3, bounce=False)
       if neighbor.contains(self.robots[robotId]) and not robot.finished:
         neighbor.updateVelocity(self.robots[robotId])
@@ -93,7 +95,7 @@ class Obstacle:
   def __init__(self, function):
     self.contains = function
 
-
+# Circular shaped obstacle that slows down robots that pass through it
 class CircleObstacle(Obstacle):
   def __init__(self, center, radius):
     def circle(robot):
@@ -106,8 +108,9 @@ class CircleObstacle(Obstacle):
     self.contains = circle
     self.updateVelocity = moderateSlow
 
+# Obstacle that is only an obstacle in that it affects how a robot moves, attracting it to a point like gravity
 class GravityObstacle(Obstacle):
-  #def __init__(self, center, radius):
+
   def __init__(self, goalPosition):
 
     def always(robot):
@@ -147,10 +150,11 @@ class GravityObstacle(Obstacle):
 class RigidObstacle():
   def __init__(self, center, radius, bounce=True):
 
+    # Function that acts as a normal force by canceling all of a robots velocity in the direction of the obstacle
     def canceledVelocity(robot):
       pos = robot.position
       vel = robot.velocity
-      e = 0.01
+      e = 0.01                # Offset of position from edge of obstacle
 
       if pos[1] > center[1]:
         newY = e + center[1] + math.sqrt(radius**2 - (pos[0]-center[0])**2)
@@ -176,14 +180,7 @@ class RigidObstacle():
         newVx = (Vx0 + Vx1/mag0) * mag0
         newVy = (Vy0 + Vy1/mag0) * mag0
 
-      print "rigid obstacle old/new v",robot.velocity,(newVx,newVy)
       robot.velocity = (newVx,newVy)
-
-
-    # def circle(robot):
-    #   position = robot.position
-    #   return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
-    # self.contains = circle
 
     self.contains = CircleObstacle(center, radius).contains
     self.updateVelocity = canceledVelocity
@@ -193,8 +190,9 @@ def slowDown(slowfactor, robot, timespan=1):
   velocity = robot.velocity
   robot.velocity = (velocity[0]*(1-slowfactor) ** (dt / timespan), velocity[1]*(1-slowfactor) ** (dt / timespan))
 
+
+# Returns true if all the robots on the map have reached the goal
 def allRobotsInGoal(gMap):
-  # Return false if there are no robots
   if len(gMap.robots) is 0:
     return False
 
@@ -207,6 +205,7 @@ def allRobotsInGoal(gMap):
 
 if __name__ == '__main__':
 
+  # Initialize variables which define the map
   startTimeProgram = timepackage.time()
   startPos = (25,40)
   vMagnitude = 3
@@ -214,7 +213,7 @@ if __name__ == '__main__':
   goalPosition = (450,100)
   mapDim = (500,200)
   endTime = 400
-  maxNumRobots = 100
+  maxNumRobots = 10
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -229,8 +228,9 @@ if __name__ == '__main__':
   globalMap = Map(mapDim, goalPosition, endTime, obstacles)
   counter = 0
 
+  # Run simulation while until time has expired or all robots are in the goal
   while time < globalMap.endTime and not allRobotsInGoal(globalMap):
-
+    # Release a new robot every 5 iterations
     if counter % 5 is 0 and len(globalMap.robots) < maxNumRobots:
       angle = random.random() * 180
       Vx = math.sin(math.radians(angle)) * vMagnitude
@@ -239,6 +239,7 @@ if __name__ == '__main__':
       rid = len(globalMap.robots)  
       globalMap.addRobot(Robot(startPos, (Vx, Vy), rid, time))
 
+    # Update position and velocity of the robot taking into account all obstacles and other robots
     for robot in globalMap.robots:
 
       if robot.finished == False:
@@ -254,6 +255,7 @@ if __name__ == '__main__':
     time += dt
     counter += 1
 
+  # Simulation has ended, now prepare data for plotting
   bestTime = float('Inf')
 
   for robot in globalMap.robots:
@@ -282,16 +284,20 @@ if __name__ == '__main__':
   endTimeProgram = timepackage.time()
   print "Serial Time",endTimeProgram-startTimeProgram
 
+  # Start plotting
   plt.figure()
+
   for robot in globalMap.robots:
     if robot.id == bestRobot:
       plt.plot(robot.histx,robot.histy,'g-',linewidth=4,alpha=.9)
     plt.plot(robot.histx,robot.histy,'b-',linewidth=2,alpha=1./maxNumRobots*4)
+  
   plt.plot(globalMap.robots[bestRobot].histx,globalMap.robots[bestRobot].histy,'g-',linewidth=4,alpha=.9)
   ax1 = plt.gca()
   plt.axis('scaled')
   ax1.set_xlim([0,mapDim[0]])
   ax1.set_ylim([0,mapDim[1]])
+  
   for robot in globalMap.robots:
     x = robot.histx
     y = robot.histy
@@ -300,6 +306,8 @@ if __name__ == '__main__':
     ydots = y[0::dotGap]
     if robot.id == bestRobot:
       plt.plot(xdots,ydots,'k.',markersize=3)
+
+  # Add plots of start, goal, and obstacles
   goalCircle = plt.Circle(goalPosition,goalTolerance,color='g')
   ax1.add_artist(goalCircle)
   startCircle = plt.Circle(startPos,goalTolerance,color='b')
@@ -311,13 +319,8 @@ if __name__ == '__main__':
   ax1.set_xlabel('x')
   ax1.set_ylabel('y')
 
-  # plt.figure()
-  # ax2 = plt.gca()
-  # plt.plot(x,'r')
-  # plt.plot(y,'g')
-  # plt.plot(vx,'b')
-  # plt.plot(vy,'k')
 
+  # In a new plot, graph velocity magnitude and angle
   plt.figure()
   plt.subplot(211)  
   for robot in globalMap.robots:
@@ -332,11 +335,3 @@ if __name__ == '__main__':
   plt.gca().set_xlabel('Time step')
   plt.gca().set_ylabel('Angle from (1,0) (Degrees)')
   plt.show()
-    
-  '''
-  with open('out.csv', 'wb') as csvfile:
-    writer = csv.writer(csvfile)
-  '''
-
-
-
