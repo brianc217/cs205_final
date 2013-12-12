@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import time as timepackage
 import csv
 import math
 import random
@@ -87,7 +87,7 @@ class Robot:
     self.histvmag = 0
     self.histvang = 0
     self.startTime = start
-    self.endTime = 0
+    self.endTime = float('Inf')
 
 class Obstacle:
   def __init__(self, function):
@@ -101,7 +101,7 @@ class CircleObstacle(Obstacle):
       return (position[0]-center[0])**2 + (position[1]-center[1])**2 <= radius**2
 
     def moderateSlow(robot):
-      return slowDown(0.01, robot)
+      return slowDown(0.2, robot)
 
     self.contains = circle
     self.updateVelocity = moderateSlow
@@ -207,6 +207,7 @@ def allRobotsInGoal(gMap):
 
 if __name__ == '__main__':
 
+  startTimeProgram = timepackage.time()
   startPos = (25,40)
   vMagnitude = 3
 
@@ -273,14 +274,20 @@ if __name__ == '__main__':
     robot.histvy = vy
     robot.histvmag = vmag
     robot.histvang = vang
+    robot.timefinish = random.random()
 
     if robot.endTime - robot.startTime < bestTime:
       bestRobot = robot.id
       bestTime = robot.endTime - robot.startTime
+  endTimeProgram = timepackage.time()
+  print "Serial Time",endTimeProgram-startTimeProgram
 
   plt.figure()
   for robot in globalMap.robots:
-    plt.plot(robot.histx,robot.histy,'b-',linewidth=4,alpha=.2)
+    if robot.id == bestRobot:
+      plt.plot(robot.histx,robot.histy,'g-',linewidth=4,alpha=.9)
+    plt.plot(robot.histx,robot.histy,'b-',linewidth=2,alpha=1./maxNumRobots*4)
+  plt.plot(globalMap.robots[bestRobot].histx,globalMap.robots[bestRobot].histy,'g-',linewidth=4,alpha=.9)
   ax1 = plt.gca()
   plt.axis('scaled')
   ax1.set_xlim([0,mapDim[0]])
@@ -291,7 +298,8 @@ if __name__ == '__main__':
     dotGap = int(np.round(np.float(len(x))/100.))
     xdots = x[0::dotGap]
     ydots = y[0::dotGap]
-    plt.plot(xdots,ydots,'k.',markersize=3)
+    if robot.id == bestRobot:
+      plt.plot(xdots,ydots,'k.',markersize=3)
   goalCircle = plt.Circle(goalPosition,goalTolerance,color='g')
   ax1.add_artist(goalCircle)
   startCircle = plt.Circle(startPos,goalTolerance,color='b')
@@ -314,8 +322,10 @@ if __name__ == '__main__':
   plt.subplot(211)  
   for robot in globalMap.robots:
     plt.plot(robot.histvmag)
+
   plt.gca().set_ylabel('Speed')
   plt.subplot(212)
+
   for robot in globalMap.robots:
     plt.plot(robot.histvang)
   plt.gca().set_ylim([-180,180])
