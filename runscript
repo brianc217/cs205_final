@@ -10,7 +10,7 @@
 #$ -S /bin/bash
 # The number of processes to launch
 # (Change the number)
-#$ -pe orte 16
+#$ -pe orte 4
 
 # Import environment and profile
 . /etc/profile

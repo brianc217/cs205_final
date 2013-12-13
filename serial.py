@@ -212,8 +212,8 @@ if __name__ == '__main__':
 
   goalPosition = (450,100)
   mapDim = (500,200)
-  endTime = 400
-  maxNumRobots = 10
+  endTime = 150
+  maxNumRobots = 8
   
   circlePosition = (400,100)
   circleRadius = 30
@@ -257,6 +257,7 @@ if __name__ == '__main__':
 
   # Simulation has ended, now prepare data for plotting
   bestTime = float('Inf')
+  bestRobot = -1
 
   for robot in globalMap.robots:
     x, y, vx, vy, vmag, vang = [], [], [], [], [], []
